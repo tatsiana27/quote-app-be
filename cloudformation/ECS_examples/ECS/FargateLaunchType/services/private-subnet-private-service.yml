@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Deploy a service on AWS Fargate, hosted in a private subnet, but accessible via a public load balancer.
+Description: Deploy a service on AWS Fargate, hosted in a private subnet, behind a private load balancer.
 Parameters:
   StackName:
     Type: String
@@ -10,7 +10,7 @@ Parameters:
     Type: String
     Default: nginx
     Description: A name for the service
-  Image:
+  ImageUrl:
     Type: String
     Default: nginx
     Description: The url of a docker image that contains the application process that
@@ -21,11 +21,11 @@ Parameters:
     Description: What port number the application inside the docker container is binding to
   ContainerCpu:
     Type: Number
-    Default: 512
+    Default: 256
     Description: How much CPU to give the container. 1024 is 1 CPU
   ContainerMemory:
     Type: Number
-    Default: 1024
+    Default: 512
     Description: How much memory in megabytes to give the container
   Path:
     Type: String
@@ -54,12 +54,6 @@ Conditions:
 
 Resources:
 
-  CloudwatchLogsGroup:
-    Type: 'AWS::Logs::LogGroup'
-    Properties:
-      LogGroupName: !Sub '${AWS::StackName}-ECSLogGroup'
-      RetentionInDays: 14
-
   # The task definition. This is a simple metadata description of what
   # container to run, and what resource requirements it has.
   TaskDefinition:
@@ -83,16 +77,9 @@ Resources:
         - Name: !Ref 'ServiceName'
           Cpu: !Ref 'ContainerCpu'
           Memory: !Ref 'ContainerMemory'
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: !Ref CloudwatchLogsGroup
-              awslogs-region: !Ref 'AWS::Region'
-              awslogs-stream-prefix: ecs
-          Image: !Ref 'Image'
+          Image: !Ref 'ImageUrl'
           PortMappings:
             - ContainerPort: !Ref 'ContainerPort'
-
 
   # The service. The service is a resource which allows you to run multiple
   # copies of a type of task, and gather up their logs and metrics, as well
@@ -108,11 +95,10 @@ Resources:
       LaunchType: FARGATE
       DeploymentConfiguration:
         MaximumPercent: 200
-        MinimumHealthyPercent: 50
+        MinimumHealthyPercent: 75
       DesiredCount: !Ref 'DesiredCount'
       NetworkConfiguration:
         AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
           SecurityGroups:
             - Fn::ImportValue:
                 !Join [':', [!Ref 'StackName', 'FargateContainerSecurityGroup']]
@@ -136,7 +122,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
       HealthCheckIntervalSeconds: 6
-      HealthCheckPath: /ping
+      HealthCheckPath: /
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 2
@@ -161,5 +147,5 @@ Resources:
           Values: [!Ref 'Path']
       ListenerArn:
         Fn::ImportValue:
-          !Join [':', [!Ref 'StackName', 'PublicListener']]
+          !Join [':', [!Ref 'StackName', 'PrivateListener']]
       Priority: !Ref 'Priority'

@@ -1,41 +1,58 @@
 {
-  "name": "quote-app",
+  "name": "quote-app-api",
   "version": "1.0.0",
-  "description": "",
-  "main": "src/index.ts",
+  "description": "Mind.js based API server for Quote app with all necessary CI/CD integrations",
+  "main": "src/main.js",
+  "engines": {
+    "node": ">=10.15.0"
+  },
   "scripts": {
-    "dev": "npx nodemon --exec npx ts-node src/index.ts",
-    "prod": "npx ts-node src/index.ts",
-    "lint": "eslint .  --ext .ts",
-    "lint-fix": "eslint --fix .  --ext .ts",
-    "test": ""
+    "start:env": "npm run start:env:pm2-runtime",
+    "start:env:pm2": "npm run pm2:kill && pm2 start ./src/main.js -i 0",
+    "start:env:pm2-runtime": "pm2-runtime start ./src/main.js -i 0",
+    "start:dev:pm2": "npm run pm2:kill && pm2 start ./src/main.js --watch=\"src\" --no-daemon --node-args=\"--inspect\" -i 1 -f",
+    "pm2:kill": "pm2 kill",
+    "lint": "eslint src --ignore-pattern \"*.spec.js\" --ignore-pattern \"*.test.js\" --ignore-pattern \"node_modules\"",
+    "lint:fix": "npm run lint -- --fix",
+    "test": "jest --config=jest.config.json",
+    "test:watch": "npm test -- --watch",
+    "test:no-coverage": "npm test -- --coverage=false",
+    "release": "standard-version"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run lint",
+      "pre-push": "npm test",
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
+    }
   },
   "repository": {
     "type": "git",
-    "url": "https://git.epam.com/Tatsiana_Kavaliova/quote-app.git"
+    "url": "git+https://github.com/tatsiana27/quote-app-be.git"
   },
   "author": "Tatsiana Kavaliova",
-  "license": "ISC",
-  "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^8.2.0",
-    "express": "^4.17.1",
-    "ts-node": "^9.1.1"
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/tatsiana27/quote-app-be/issues"
   },
+  "homepage": "https://github.com/tatsiana27/quote-app-be#readme",
   "devDependencies": {
-    "@types/cors": "^2.8.10",
-    "@types/express": "^4.17.11",
-    "@types/node": "^14.14.41",
-    "@typescript-eslint/eslint-plugin": "^4.29.3",
-    "@typescript-eslint/parser": "^4.29.3",
-    "aws-sdk": "^2.928.0",
-    "body-parser": "^1.19.0",
-    "eslint": "^7.32.0",
-    "eslint-config-airbnb-base": "^14.2.1",
-    "eslint-plugin-import": "^2.24.2",
-    "mongodb": "^3.6.6",
-    "mongoose": "^5.12.5",
-    "prettier": "^2.2.1",
-    "typescript": "^4.2.4"
+    "@commitlint/cli": "^8.3.5",
+    "@commitlint/config-conventional": "^8.3.4",
+    "@mindjs/testing": "^1.2.0",
+    "eslint": "^6.8.0",
+    "eslint-plugin-node": "^11.1.0",
+    "husky": "^4.2.5",
+    "jest": "^25.3.0",
+    "standard-version": "^7.1.0",
+    "supertest": "^4.0.2"
+  },
+  "dependencies": {
+    "@mindjs/common": "^1.2.0",
+    "@mindjs/core": "^1.2.0",
+    "@mindjs/platform-koa": "^1.2.0",
+    "@mindjs/routing": "^1.2.0",
+    "pm2": "^4.3.0",
+    "quotesy": "^1.0.5"
   }
 }
