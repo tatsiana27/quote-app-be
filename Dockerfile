@@ -20,4 +20,4 @@ COPY . /quote-app-be
 
 EXPOSE 80
 
-ENTRYPOINT ["/bin/sh", "-c"]CMD ["npm", "run", "start:env"]
+ENTRYPOINT ["/bin/sh", "-c"]CMD ["npm", "run", "prod"]

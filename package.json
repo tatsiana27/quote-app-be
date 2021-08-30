@@ -5,7 +5,7 @@
   "main": "src/index.ts",
   "scripts": {
     "dev": "npx nodemon --exec npx ts-node src/index.ts",
-    "production": "npx ts-node src/index.ts",
+    "prod": "npx ts-node src/index.ts",
     "lint": "eslint .  --ext .ts",
     "lint-fix": "eslint --fix .  --ext .ts",
     "test": ""
