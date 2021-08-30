@@ -5,11 +5,6 @@ env:
     DOCKER_REPOSITORY_URI: ""
 
 phases:
-
-  install:
-    runtime-versions:
-      docker: 18
-
   pre_build:
     commands:
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
