@@ -1,26 +1,23 @@
-ARG BASE_IMAGES_ECR_REGISTRY="966298058302.dkr.ecr.us-east-1.amazonaws.com"
-ARG BASE_IMAGES_REPOSITORY="base-images"
-ARG BASE_NODE_IMAGE_TAG="node-14.17.4-alpine3.11"
-FROM $BASE_IMAGES_ECR_REGISTRY/$BASE_IMAGES_REPOSITORY:$BASE_NODE_IMAGE_TAG
+FROM node:12-alpine
 
-# Create app directory
-WORKDIR /usr/src/app
+ARG NODE_ENV="production"
 
-# Install app dependencies
-# A wildcard is used to ensure both package.json AND package-lock.json are copied
-# where available (npm@5+)
-COPY package*.json ./
+ENV PORT=80
 
-RUN npm install
-# If you are building your code for production
-# RUN npm ci --only=production
+RUN apk add --update
+RUN apk add unzip
+RUN apk add git
 
-# Bundle app source
-COPY . .
+# Use changes to package.json to force Docker not to use the cache when we change our application's nodejs dependencies:
+COPY package.json /tmp/package.json
+COPY package-lock.json /tmp/package-lock.json
+RUN cd /tmp && npm install --production
+RUN mkdir -p /quote-app-be && cp -a /tmp/node-modules /quote-app-be
 
-RUN npm i nodemon -g
+# From here we load our application's code in, therefore the previous docker "layer" that has been cached, will be used if possible
+WORKDIR /quote-app-be
+COPY . /quote-app-be
 
-# our app is running on port 5000 within the container, so need to expose it
-EXPOSE 5000
+EXPOSE 80
 
-CMD ["npm", "run", "dev"]
+ENTRYPOINT ["/bin/sh", "-c"]CMD ["npm", "run", "start:env"]
