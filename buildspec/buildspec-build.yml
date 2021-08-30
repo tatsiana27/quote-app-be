@@ -2,34 +2,28 @@ version: 0.2
 
 env:
   variables:
-    BUILD_ENV: "production"
-    CLOUDFRONT_DIST_ID: ""
+    DOCKER_REPOSITORY_URI: ""
 
 phases:
+
   install:
     runtime-versions:
-      nodejs: 12.x
+      docker: 18
 
+  pre_build:
     commands:
-      # temporary fix of YARN cert issue
-      # TODO: clean it up...
-      - curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
-      -
-      # Update packages.
-      - apt-get update -y -q
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - IMAGE_TAG=${COMMIT_HASH:=latest}
 
-      # Install @angular/cli and app dependencies.
-      - echo Installing source NPM dependencies...
-      - npm install -g @angular/cli
-      - npm install
+      - echo Logging in to Amazon ECR.
+      - aws --version
+      - $(aws ecr get-login --no-include-email --region us-east-1)
 
   build:
     commands:
-      # Build Angular application.
-      - echo Build started on `date`
-      - npm run build -- --configuration=${BUILD_ENV}
-
-      - docker build -t $DOCKER_REPOSITORY_URI:latest
+      - echo Build has been started.
+      - echo Building a Docker image.
+      - docker build -t $DOCKER_REPOSITORY_URI:latest .
       - docker tag $DOCKER_REPOSITORY_URI:latest $DOCKER_REPOSITORY_URI:$IMAGE_TAG
 
   post_build:
@@ -41,6 +35,7 @@ phases:
 
       - echo Writing an image definition file.
       - printf '{"Image":"%s"}' $DOCKER_REPOSITORY_URI:$IMAGE_TAG > image-def.json
+      - cat image-def.json
 
 artifacts:
   files:
@@ -51,4 +46,4 @@ artifacts:
       base-directory: $CODEBUILD_SRC_DIR
       discard-paths: no
       files:
-        - '**/*'
+        - "**/*"
